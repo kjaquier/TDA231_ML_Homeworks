@@ -131,11 +131,12 @@ function res = grad(model, data, wd_coefficient)
   % class_prob is the model output.
   
   %% TODO - Write code here ---------------
-  K = 1;
+  
   err = class_prob - data.targets;
   class_output = logsoftmax(class_input);
   class_grad = class_output .* (1-class_output);
   
+  K = 1;
   hid_exp = exp(K * hid_input);
   hid_grad = K .* hid_exp / (1 + hid_exp) .^ 2;
 
@@ -146,8 +147,8 @@ function res = grad(model, data, wd_coefficient)
   
   sum_hid_to_class = sum(model.hid_to_class, 2);
   
-  input_to_hid_cost = (delta_class .* sum_hid_to_class .* hid_grad) .* data.targets;
-  hid_to_class_cost = delta_class .* hid_output;
+%  input_to_hid_cost = delta_class * (sum_hid_to_class .* hid_grad) .* data.targets;
+  hid_to_class_cost = delta_class.' * hid_output;
   input_to_hid_l2 = 2 * wd_coefficient .* model.input_to_hid;
   hid_to_class_l2 = 2 * wd_coefficient .* model.hid_to_class;
   
