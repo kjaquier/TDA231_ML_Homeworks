@@ -132,29 +132,41 @@ function res = grad(model, data, wd_coefficient)
   
   %% TODO - Write code here ---------------
   
-  err = class_prob - data.targets;
-  class_output = logsoftmax(class_input);
+  n = size(data.inputs, 2);
+  n_input = size(data.inputs, 1);
+  n_hid = size(model.hid_to_class, 2);
+  n_out = size(model.hid_to_class, 1);
+  input_to_hid = zeros(n_hid, n_input, 1);
+  hid_to_class = zeros(n_out, n_hid, 1);
+  
+  for s = 1:size(data.targets,1)
+  
+  err = class_prob(:,s) - data.targets(:,s);
+  class_output = logsoftmax(class_input(:, s));
   class_grad = class_output .* (1-class_output);
   
   K = 1;
-  hid_exp = exp(K * hid_input);
-  hid_grad = K .* hid_exp / (1 + hid_exp) .^ 2;
+  hid_exp = exp(K * hid_input(:,s));
+  hid_grad = K * hid_exp ./ (1 + hid_exp) .^ 2;
 
-%   n_hid = size(model.hid_to_class, 2);
-%   n_out = size(model.hid_to_class, 1);
 	
   delta_class = err .* class_grad;
   
-  sum_hid_to_class = sum(model.hid_to_class, 2);
+  sum_hid_to_class = sum(model.hid_to_class, 1);
   
-%  input_to_hid_cost = delta_class * (sum_hid_to_class .* hid_grad) .* data.targets;
-  hid_to_class_cost = delta_class.' * hid_output;
+  input_to_hid_cost = (delta_class * (sum_hid_to_class.' .* hid_grad).').' * data.targets(:,s);
+  hid_to_class_cost = delta_class * hid_output(:,s).';
   input_to_hid_l2 = 2 * wd_coefficient .* model.input_to_hid;
   hid_to_class_l2 = 2 * wd_coefficient .* model.hid_to_class;
   
+  input_to_hid(:,:,s) = input_to_hid(:,:,s) + input_to_hid_cost + input_to_hid_l2;
+  hid_to_class(:,:,s) = hid_to_class(:,:,s) + hid_to_class_cost + hid_to_class_l2;
+  
+  end
+  
   % Right now the function just returns a lot of zeros. Your job is to change that.
-  res.input_to_hid = input_to_hid_cost + input_to_hid_l2;
-  res.hid_to_class = hid_to_class_cost + hid_to_class_l2;
+  res.input_to_hid = mean(input_to_hid, 3);%input_to_hid_cost + input_to_hid_l2;
+  res.hid_to_class = mean(hid_to_class, 3);%hid_to_class_cost + hid_to_class_l2;
   % ---------------------------------------
 end
 
