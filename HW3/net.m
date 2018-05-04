@@ -132,14 +132,28 @@ function res = grad(model, data, wd_coefficient)
   
   %% TODO - Write code here ---------------
   K = 1;
-  softmax_grad = @(
-  
   err = class_prob - data.targets;
-  delta_k = err * logsoftmax(class_input);
+  class_output = logsoftmax(class_input);
+  class_grad = class_output .* (1-class_output);
+  
+  hid_exp = exp(K * hid_input);
+  hid_grad = K .* hid_exp / (1 + hid_exp) .^ 2;
 
-    % Right now the function just returns a lot of zeros. Your job is to change that.
-    res.input_to_hid = model.input_to_hid * 0;
-    res.hid_to_class = model.hid_to_class * 0;
+%   n_hid = size(model.hid_to_class, 2);
+%   n_out = size(model.hid_to_class, 1);
+	
+  delta_class = err .* class_grad;
+  
+  sum_hid_to_class = sum(model.hid_to_class, 2);
+  
+  input_to_hid_cost = (delta_class .* sum_hid_to_class .* hid_grad) .* data.targets;
+  hid_to_class_cost = delta_class .* hid_output;
+  input_to_hid_l2 = 2 * wd_coefficient .* model.input_to_hid;
+  hid_to_class_l2 = 2 * wd_coefficient .* model.hid_to_class;
+  
+  % Right now the function just returns a lot of zeros. Your job is to change that.
+  res.input_to_hid = input_to_hid_cost + input_to_hid_l2;
+  res.hid_to_class = hid_to_class_cost + hid_to_class_l2;
   % ---------------------------------------
 end
 
