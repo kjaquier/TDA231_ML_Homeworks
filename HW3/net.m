@@ -134,11 +134,11 @@ function res = grad(model, data, wd_coefficient)
   
   % W_jk gradient calculated in steps
   
-  err = class_prob - data.targets;
+  err = (class_prob - data.targets);
   class_grad_jk_temp = class_prob .* (1-class_prob);
   class_grad_jk_temp = err.*class_grad_jk_temp;
   delta_k = zeros(10,1);
-  hid_to_class_cost = zeros(10,7);
+  hid_to_class_cost = zeros(10,length(hid_output(:,1)));
   for i = 1:length(err(1,:))
       delta_k = delta_k+class_grad_jk_temp(:,i);
     temp = class_grad_jk_temp(:,i)*hid_output(:,i)';
@@ -149,16 +149,16 @@ function res = grad(model, data, wd_coefficient)
   d_logistic = hid_output.*(1-hid_output);
   temp = sum(model.hid_to_class.*delta_k);
   delta_j = d_logistic.*temp';
-  input_to_hid_cost = zeros(7,256);
+  input_to_hid_cost = zeros(length(hid_output(:,1)),256);
   for i = 1:length(err(1,:))
       temp = delta_j(:,i)*data.inputs(:,i)';
       input_to_hid_cost = input_to_hid_cost + temp;
   end
   
-%  input_to_hid_cost = delta_class * (sum_hid_to_class .* hid_grad) .* data.targets;
 
-  input_to_hid_l2 = 2 * wd_coefficient .* model.input_to_hid;
-  hid_to_class_l2 = 2 * wd_coefficient .* model.hid_to_class;
+
+  input_to_hid_l2 =  wd_coefficient .* model.input_to_hid;
+  hid_to_class_l2 =  wd_coefficient .* model.hid_to_class;
     
     
   % Right now the function just returns a lot of zeros. Your job is to change that.
