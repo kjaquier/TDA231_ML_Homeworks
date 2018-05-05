@@ -1,4 +1,4 @@
-function net(wd_coefficient, n_hid, n_iters, learning_rate, momentum_multiplier, do_early_stopping, mini_batch_size)
+function res = net(wd_coefficient, n_hid, n_iters, learning_rate, momentum_multiplier, do_early_stopping, mini_batch_size)
   model = init_model(n_hid);
   from_data_file = load('data.mat');
   datas = from_data_file.data;
@@ -62,10 +62,16 @@ function net(wd_coefficient, n_hid, n_iters, learning_rate, momentum_multiplier,
   end
   datas2 = {datas.training, datas.validation, datas.test};
   data_names = {'training', 'validation', 'test'};
+  res.costs = {};
+  res.costs_nowd = {};
+  res.err_rates = {};
   for data_i = 1:3,
     data = datas2{data_i};
     data_name = data_names{data_i};
     fprintf('\nThe cost on the %s data is %f\n', data_name, cost(model, data, wd_coefficient));
+	res.costs{data_i} = cost(model, data, wd_coefficient);
+	res.costs_nowd{data_i} = cost(model, data, 0);
+	res.err_rates{data_i} = classification_performance(model, data);
     if wd_coefficient~=0,
       fprintf('The classification cost (i.e. without weight decay) on the %s data is %f\n', data_name, cost(model, data, 0));
     end
@@ -138,27 +144,26 @@ function res = grad(model, data, wd_coefficient)
   n_out = size(model.hid_to_class, 1);
   input_to_hid = zeros(n_hid, n_input, 1);
   hid_to_class = zeros(n_out, n_hid, 1);
-  
+	
   for s = 1:size(data.targets,1)
   
   err = class_prob(:,s) - data.targets(:,s);
   class_output = logsoftmax(class_input(:, s));
   class_grad = class_output .* (1-class_output);
-  
+
   K = 1;
   hid_exp = exp(K * hid_input(:,s));
   hid_grad = K * hid_exp ./ (1 + hid_exp) .^ 2;
 
-	
   delta_class = err .* class_grad;
-  
+
   sum_hid_to_class = sum(model.hid_to_class, 1);
-  
+
   input_to_hid_cost = (delta_class * (sum_hid_to_class.' .* hid_grad).').' * data.targets(:,s);
   hid_to_class_cost = delta_class * hid_output(:,s).';
   input_to_hid_l2 = 2 * wd_coefficient .* model.input_to_hid;
   hid_to_class_l2 = 2 * wd_coefficient .* model.hid_to_class;
-  
+
   input_to_hid(:,:,s) = input_to_hid(:,:,s) + input_to_hid_cost + input_to_hid_l2;
   hid_to_class(:,:,s) = hid_to_class(:,:,s) + hid_to_class_cost + hid_to_class_l2;
   
