@@ -144,10 +144,8 @@ function res = grad(model, data, wd_coefficient)
   
   % W_jk gradient calculated in steps  
   err = class_prob - data.targets;
-  %delta_k = zeros(n_out, 1, n_samples);
   hid_to_class_cost = zeros(n_out, n_hid, n_samples);
   for s = 1:n_samples
-    %delta_k(:,:,s) = err(:,s);
     hid_to_class_cost(:,:,s) = err(:,s) * hid_output(:,s)';
   end
 
@@ -160,10 +158,9 @@ function res = grad(model, data, wd_coefficient)
       input_to_hid_cost(:,:,s) = delta_j(:,s) * data.inputs(:,s)';
   end
 
+  % Putting everything together
   input_to_hid_l2 =  wd_coefficient .* model.input_to_hid;
   hid_to_class_l2 =  wd_coefficient .* model.hid_to_class;
-    
-  % Right now the function just returns a lot of zeros. Your job is to change that.
   res.input_to_hid = mean(input_to_hid_cost, 3) + input_to_hid_l2;
   res.hid_to_class = mean(hid_to_class_cost, 3) + hid_to_class_l2;
   % ---------------------------------------
