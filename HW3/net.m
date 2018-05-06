@@ -61,17 +61,17 @@ function res = net(wd_coefficient, n_hid, n_iters, learning_rate, momentum_multi
     hold off;
   end
   datas2 = {datas.training, datas.validation, datas.test};
-  data_names = {'training', 'validation', 'test'};
-  res.costs = {};
-  res.costs_nowd = {};
-  res.err_rates = {};
+  res.names = {'training', 'validation', 'test'};
+  res.costs = [];
+  res.costs_nowd = [];
+  res.err_rates = [];
   for data_i = 1:3,
     data = datas2{data_i};
-    data_name = data_names{data_i};
+    data_name = res.names{data_i};
     fprintf('\nThe cost on the %s data is %f\n', data_name, cost(model, data, wd_coefficient));
-	res.costs{data_i} = cost(model, data, wd_coefficient);
-	res.costs_nowd{data_i} = cost(model, data, 0);
-	res.err_rates{data_i} = classification_performance(model, data);
+	res.costs(data_i) = cost(model, data, wd_coefficient);
+	res.costs_nowd(data_i) = cost(model, data, 0);
+	res.err_rates(data_i) = classification_performance(model, data);
     if wd_coefficient~=0,
       fprintf('The classification cost (i.e. without weight decay) on the %s data is %f\n', data_name, cost(model, data, 0));
     end
