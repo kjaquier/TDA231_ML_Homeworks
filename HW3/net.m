@@ -137,41 +137,35 @@ function res = grad(model, data, wd_coefficient)
   % class_prob is the model output.
   
   %% TODO - Write code here ---------------
-  
-  n = size(data.inputs, 2);
+  n_samples = size(data.inputs, 2);
   n_input = size(data.inputs, 1);
   n_hid = size(model.hid_to_class, 2);
   n_out = size(model.hid_to_class, 1);
-  input_to_hid = zeros(n_hid, n_input, 1);
-  hid_to_class = zeros(n_out, n_hid, 1);
-	
-  for s = 1:size(data.targets,1)
   
-  err = class_prob(:,s) - data.targets(:,s);
-  class_output = logsoftmax(class_input(:, s));
-  class_grad = class_output .* (1-class_output);
-
-  K = 1;
-  hid_exp = exp(K * hid_input(:,s));
-  hid_grad = K * hid_exp ./ (1 + hid_exp) .^ 2;
-
-  delta_class = err .* class_grad;
-
-  sum_hid_to_class = sum(model.hid_to_class, 1);
-
-  input_to_hid_cost = (delta_class * (sum_hid_to_class.' .* hid_grad).').' * data.targets(:,s);
-  hid_to_class_cost = delta_class * hid_output(:,s).';
-  input_to_hid_l2 = 2 * wd_coefficient .* model.input_to_hid;
-  hid_to_class_l2 = 2 * wd_coefficient .* model.hid_to_class;
-
-  input_to_hid(:,:,s) = input_to_hid(:,:,s) + input_to_hid_cost + input_to_hid_l2;
-  hid_to_class(:,:,s) = hid_to_class(:,:,s) + hid_to_class_cost + hid_to_class_l2;
-  
+  % W_jk gradient calculated in steps  
+  err = class_prob - data.targets;
+  %delta_k = zeros(n_out, 1, n_samples);
+  hid_to_class_cost = zeros(n_out, n_hid, n_samples);
+  for s = 1:n_samples
+    %delta_k(:,:,s) = err(:,s);
+    hid_to_class_cost(:,:,s) = err(:,s) * hid_output(:,s)';
   end
-  
+
+  % W_ij gradient calculated in steps
+  d_logistic = hid_output .* (1 - hid_output);
+  temp = err' * model.hid_to_class;
+  delta_j = d_logistic .* temp';
+  input_to_hid_cost = zeros(n_hid, n_input, n_samples);
+  for s = 1:n_samples
+      input_to_hid_cost(:,:,s) = delta_j(:,s) * data.inputs(:,s)';
+  end
+
+  input_to_hid_l2 =  wd_coefficient .* model.input_to_hid;
+  hid_to_class_l2 =  wd_coefficient .* model.hid_to_class;
+    
   % Right now the function just returns a lot of zeros. Your job is to change that.
-  res.input_to_hid = mean(input_to_hid, 3);%input_to_hid_cost + input_to_hid_l2;
-  res.hid_to_class = mean(hid_to_class, 3);%hid_to_class_cost + hid_to_class_l2;
+  res.input_to_hid = mean(input_to_hid_cost, 3) + input_to_hid_l2;
+  res.hid_to_class = mean(hid_to_class_cost, 3) + hid_to_class_l2;
   % ---------------------------------------
 end
 
