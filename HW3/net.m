@@ -135,27 +135,30 @@ function res = grad(model, data, wd_coefficient)
   % W_jk gradient calculated in steps
   
   err = (class_prob - data.targets);
-  class_grad_jk_temp = class_prob .* (1-class_prob);
+  %err_t = err'*model.hid_to_class
+  class_grad_jk_temp = hid_output .* (1-hid_output);
   class_grad_jk_temp = err.*class_grad_jk_temp;
   delta_k = zeros(10,1);
   hid_to_class_cost = zeros(10,length(hid_output(:,1)));
   for i = 1:length(err(1,:))
-      delta_k = delta_k+class_grad_jk_temp(:,i);
-    temp = class_grad_jk_temp(:,i)*hid_output(:,i)';
+      delta_k = delta_k + err(:,i);
+    temp = err(:,i)*hid_output(:,i)';
     hid_to_class_cost = hid_to_class_cost + temp;
   end
 
   % W_ij gradient calculated in steps
   d_logistic = hid_output.*(1-hid_output);
-  temp = sum(model.hid_to_class.*delta_k);
+  temp = err'*model.hid_to_class;
   delta_j = d_logistic.*temp';
   input_to_hid_cost = zeros(length(hid_output(:,1)),256);
   for i = 1:length(err(1,:))
       temp = delta_j(:,i)*data.inputs(:,i)';
       input_to_hid_cost = input_to_hid_cost + temp;
   end
-  
-
+  size(data.inputs,2)
+  length(data.inputs(1,:))
+input_to_hid_cost = input_to_hid_cost ./ length(data.inputs(1,:));
+hid_to_class_cost = hid_to_class_cost ./ length(data.inputs(1,:));
 
   input_to_hid_l2 =  wd_coefficient .* model.input_to_hid;
   hid_to_class_l2 =  wd_coefficient .* model.hid_to_class;
