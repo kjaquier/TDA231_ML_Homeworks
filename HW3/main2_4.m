@@ -54,4 +54,14 @@ end
 
 %% (f)
 
-%net(wd_coefficient, n_hid, n_iters, learning_rate, momentum_multiplier, do_early_stopping, mini_batch_size);
+wd_coefficient = 0;
+n_hid = 37;
+n_iters = 1000;
+learning_rate = 0.2;
+momentum_multiplier = 0.9;
+do_early_stopping = true;
+mini_batch_size = 100;
+no_wd = net(wd_coefficient, n_hid, n_iters, learning_rate, momentum_multiplier, do_early_stopping, mini_batch_size)
+
+wd_coefficient = 0.001
+with_wd = net(wd_coefficient, n_hid, n_iters, learning_rate, momentum_multiplier, do_early_stopping, mini_batch_size)
